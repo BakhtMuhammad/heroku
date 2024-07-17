@@ -1,42 +1,47 @@
 import streamlit as st
 import pickle
+import numpy as np
 
-st.title("Welcome to Titanic Prediction App :ship:")
-st.image('titanic2.jpg')
-pickle_in = open("titanicclassifier.pkl", "rb")
-classifier = pickle.load(pickle_in)
+st.title("Titanic Survival Prediction App")
 
-#Defining the function which will make the predictin using the data that user will input
+# Load the model
+with open('titanicclassifier.pkl', 'rb') as file:
+    classifier = pickle.load(file)
+
+# Define the prediction function
 def prediction(Pclass, Sex, Age, SibSp, Parch, Fare, Embarked):
-    prediction = classifier.predict([[Pclass, Sex, Age, SibSp, Parch, Fare, Embarked]])
-    print(prediction)
+    # Convert inputs to appropriate types
+    Pclass = int(Pclass)
+    Sex = 1 if Sex == 'male' else 0
+    Age = float(Age)
+    SibSp = int(SibSp)
+    Parch = int(Parch)
+    Fare = float(Fare)
+    Embarked = {'C': 0, 'Q': 1, 'S': 2}[Embarked]
+
+    # Predict
+    features = np.array([[Pclass, Sex, Age, SibSp, Parch, Fare, Embarked]])
+    prediction = classifier.predict(features)
     return prediction
 
 def main():
-    st.title("Titanic Prediction App")
+    st.title("Titanic Survival Prediction App")
 
-    #The following code creates text boxes in which the user can enter the data required to make prediction
-    Pclass = st.text_input("Passenger Class")
-    Sex = st.text_input("Sex")
+    # Input fields
+    Pclass = st.text_input("Passenger Class (1, 2, or 3)")
+    Sex = st.selectbox("Sex", ('male', 'female'))
     Age = st.text_input("Age")
-    SibSp = st.text_input("Sibling/Spouse")
-    Parch = st.text_input("Parent/Child")
+    SibSp = st.text_input("Number of Siblings/Spouses Aboard")
+    Parch = st.text_input("Number of Parents/Children Aboard")
     Fare = st.text_input("Fare")
-    Embarked = st.text_input("Embarked")
-    result = ""
+    Embarked = st.selectbox("Port of Embarkation", ('C', 'Q', 'S'))
 
-    #This code ensure that whent he button 'Predict' is clicked, the prediction function defined above
-    #is classed to make the prediction and store it in the variable result
     if st.button("Predict"):
+        try:
+            result = prediction(Pclass, Sex, Age, SibSp, Parch, Fare, Embarked)
+            st.success(f'This output is: {"Survived" if result[0] == 1 else "Did not survive"}')
+        except Exception as e:
+            st.error(f'Error: {e}')
 
-        #Convert inputs to appropriate types
-        Pclass = int(Pclass)
-        Age = float(Age)
-        SibSp = int(SibSp)
-        Parch = int(Parch)
-        Fare = float(Fare)
-
-        result = prediction(Pclass, Sex, Age, SibSp, Parch, Fare, Embarked)
-    st.success('This output is: {}'.format(result))
-
-main()
+if __name__ == "__main__":
+    main()
